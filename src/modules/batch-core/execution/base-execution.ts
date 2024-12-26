@@ -39,7 +39,7 @@ export abstract class BaseExecution {
   protected createTime: Date;
   protected lastUpdatedTime: Date;
   protected exitStatus: string;
-  protected failureExceptions: string[];
+  protected failureExceptions: string[] = [];
 
   setId(id: string) {
     this.id = id;
@@ -164,7 +164,7 @@ export abstract class BaseExecution {
     this.setName(execution.getName());
     this.setCreateTime(execution.getCreateTime());
     this.setLastUpdatedTime(execution.getLastUpdatedTime());
-    this.setStatus(execution.getStatus());
+    this.status = execution.status;
     this.setStartTime(execution.getStartTime());
     this.setEndTime(execution.getEndTime());
     this.setExitStatus(execution.getExitStatus());
@@ -172,7 +172,10 @@ export abstract class BaseExecution {
   }
 
   private isValidTransition(newStatus: ExecutionStatus): boolean {
-    const allowedTransitions = VALID_TRANSITIONS[this.status] || [];
+    const allowedTransitions = VALID_TRANSITIONS[this.status] || [
+      ExecutionStatus.CREATED,
+    ];
+
     return allowedTransitions.includes(newStatus);
   }
 }

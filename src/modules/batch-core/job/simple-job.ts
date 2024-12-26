@@ -13,6 +13,7 @@ export class SimpleJob extends Job {
       .setName(this.name)
       .setStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
+
     try {
       if (!this.name) {
         throw new Error('Job name is required');

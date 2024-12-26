@@ -7,8 +7,8 @@ import { LIB_NAME } from '../constants';
 
 export abstract class Job {
   protected name: string;
-  protected steps: Step<any, any>[];
-  protected listeners: JobListener[];
+  protected steps: Step<any, any>[] = [];
+  protected listeners: JobListener[] = [];
   protected jobRepository: JobRepository;
   protected readonly logger = new Logger(LIB_NAME);
 

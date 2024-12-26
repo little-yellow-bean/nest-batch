@@ -11,7 +11,7 @@ export abstract class Step<I, O> {
   protected reader: ItemReader<I>;
   protected processor?: ItemProcessor<I, O>;
   protected writer: ItemWriter<O>;
-  protected listeners: StepListener[];
+  protected listeners: StepListener[] = [];
   protected chunkSize: number;
   protected name: string;
   protected jobRepository: JobRepository;
