@@ -1,4 +1,4 @@
-A simple batch processing library for [Nest](https://github.com/nestjs/nest), inspired by [Spring Batch](https://github.com/spring-projects/spring-batch).
+A simple batch processing module for [Nest](https://github.com/nestjs/nest), inspired by [Spring Batch](https://github.com/spring-projects/spring-batch).
 
 Example usage:
 
