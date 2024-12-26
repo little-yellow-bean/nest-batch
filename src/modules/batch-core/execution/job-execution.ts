@@ -14,7 +14,6 @@ export class JobExecution extends BaseExecution {
 
   override from(execution: JobExecution) {
     super.from(execution);
-    this.jobParameters = structuredClone(execution.getJobParameters());
-    return this;
+    return this.setJobParameters(execution.getJobParameters());
   }
 }
