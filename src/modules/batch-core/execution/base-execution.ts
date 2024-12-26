@@ -4,24 +4,27 @@ export enum ExecutionStatus {
   STARTED = 'STARTED',
   STOPPING = 'STOPPING',
   STOPPED = 'STOPPED',
+  PAUSED = 'PAUSED',
   FAILED = 'FAILED',
   COMPLETED = 'COMPLETED',
   ABANDONED = 'ABANDONED',
 }
 
-const validTransitions: Record<ExecutionStatus, ExecutionStatus[]> = {
+const VALID_TRANSITIONS: Record<ExecutionStatus, ExecutionStatus[]> = {
   [ExecutionStatus.CREATED]: [
     ExecutionStatus.STARTING,
     ExecutionStatus.ABANDONED,
   ],
   [ExecutionStatus.STARTING]: [ExecutionStatus.STARTED, ExecutionStatus.FAILED],
   [ExecutionStatus.STARTED]: [
+    ExecutionStatus.PAUSED,
     ExecutionStatus.STOPPING,
     ExecutionStatus.COMPLETED,
     ExecutionStatus.FAILED,
   ],
   [ExecutionStatus.STOPPING]: [ExecutionStatus.STOPPED, ExecutionStatus.FAILED],
-  [ExecutionStatus.STOPPED]: [ExecutionStatus.STARTING],
+  [ExecutionStatus.PAUSED]: [ExecutionStatus.STARTING],
+  [ExecutionStatus.STOPPED]: [],
   [ExecutionStatus.FAILED]: [],
   [ExecutionStatus.COMPLETED]: [],
   [ExecutionStatus.ABANDONED]: [],
@@ -169,7 +172,7 @@ export abstract class BaseExecution {
   }
 
   private isValidTransition(newStatus: ExecutionStatus): boolean {
-    const allowedTransitions = validTransitions[this.status] || [];
+    const allowedTransitions = VALID_TRANSITIONS[this.status] || [];
     return allowedTransitions.includes(newStatus);
   }
 }
