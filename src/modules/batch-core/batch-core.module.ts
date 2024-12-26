@@ -1,8 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ModuleOptions, DEFAULT_MODULE_OPTIONS } from './config';
 import { BATCH_CONFIG, BATCH_JOB_REPOSITORY } from './constants';
-import { JobLauncher } from './job/job-launcher';
-import { JobFactory } from './job/job-factory';
+import { JobFactory, JobLauncher } from './job';
 
 @Module({})
 export class BatchCoreModule {
