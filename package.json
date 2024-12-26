@@ -1,8 +1,12 @@
 {
-  "name": "batch-testing",
+  "name": "nest-batch",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Batch processing for NestJS",
+  "author": {
+    "name": "YellowBean",
+    "email": "brazel@foxmail.com"
+  },
+  "repository": "https://github.com/little-yellow-bean/nest-batch",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
