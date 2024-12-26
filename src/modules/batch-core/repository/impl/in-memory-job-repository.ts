@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { JobExecution, StepExecution } from '../../execution';
 import {
   JobRepository,
@@ -7,7 +6,6 @@ import {
   UpdateStepExecutionPayload,
 } from '../job-repository.model';
 
-@Injectable()
 export class InMemoryJobRepository implements JobRepository {
   private jobExecutions: Map<string, JobExecution> = new Map();
   private stepExecutions: Map<string, StepExecution> = new Map();
