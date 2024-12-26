@@ -1,1 +1,1 @@
-export const LIB_NAME = 'AICOE-BATCH';
+export const LIB_NAME = 'NEST-BATCH';
