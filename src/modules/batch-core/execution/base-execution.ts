@@ -9,6 +9,24 @@ export enum ExecutionStatus {
   ABANDONED = 'ABANDONED',
 }
 
+const validTransitions: Record<ExecutionStatus, ExecutionStatus[]> = {
+  [ExecutionStatus.CREATED]: [
+    ExecutionStatus.STARTING,
+    ExecutionStatus.ABANDONED,
+  ],
+  [ExecutionStatus.STARTING]: [ExecutionStatus.STARTED, ExecutionStatus.FAILED],
+  [ExecutionStatus.STARTED]: [
+    ExecutionStatus.STOPPING,
+    ExecutionStatus.COMPLETED,
+    ExecutionStatus.FAILED,
+  ],
+  [ExecutionStatus.STOPPING]: [ExecutionStatus.STOPPED, ExecutionStatus.FAILED],
+  [ExecutionStatus.STOPPED]: [ExecutionStatus.STARTING],
+  [ExecutionStatus.FAILED]: [],
+  [ExecutionStatus.COMPLETED]: [],
+  [ExecutionStatus.ABANDONED]: [],
+};
+
 export abstract class BaseExecution {
   protected id: string;
   protected name: string;
@@ -41,6 +59,11 @@ export abstract class BaseExecution {
   }
 
   setStatus(status: ExecutionStatus) {
+    if (!this.isValidTransition(status)) {
+      throw new Error(
+        `Invalid status transition from ${this.status} to ${status}`,
+      );
+    }
     this.status = status;
     return this;
   }
@@ -143,5 +166,10 @@ export abstract class BaseExecution {
     this.setEndTime(execution.getEndTime());
     this.setExitStatus(execution.getExitStatus());
     this.setFailureExceptions(execution.getFailureExceptions());
+  }
+
+  private isValidTransition(newStatus: ExecutionStatus): boolean {
+    const allowedTransitions = validTransitions[this.status] || [];
+    return allowedTransitions.includes(newStatus);
   }
 }

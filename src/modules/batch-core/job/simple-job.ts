@@ -3,11 +3,13 @@ import { Job } from './job';
 import { ExecutionStatus, JobExecution } from '../execution';
 
 export class SimpleJob extends Job {
-  override async execute(): Promise<JobExecution> {
+  override async execute(
+    parameters: Record<string, any>,
+  ): Promise<JobExecution> {
     const jobExecution = new JobExecution()
       .setId(uuid())
       .setCreateTime(new Date())
-      .setJobParameters(this.parameters)
+      .setJobParameters(parameters)
       .setName(this.name)
       .setStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());

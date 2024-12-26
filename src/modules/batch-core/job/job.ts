@@ -7,21 +7,15 @@ import { LIB_NAME } from '../constants';
 
 export abstract class Job {
   protected name: string;
-  protected parameters: Record<string, any>;
   protected steps: Step<any, any>[];
   protected listeners: JobListener[];
   protected jobRepository: JobRepository;
   protected readonly logger = new Logger(LIB_NAME);
 
-  abstract execute(): Promise<JobExecution>;
+  abstract execute(parameters: Record<string, any>): Promise<JobExecution>;
 
   addStep(step: Step<any, any>) {
     this.steps.push(step);
-    return this;
-  }
-
-  setParameters(parameters: Record<string, any>) {
-    this.parameters = parameters;
     return this;
   }
 

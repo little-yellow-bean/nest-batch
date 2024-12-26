@@ -5,11 +5,14 @@ export const DEFAULT_CHUNK_SIZE = 10;
 export interface BatchConfig {
   maxRetries?: number;
   retryDelay?: number;
-  repository?: Type<JobRepository>;
   chunkSize?: number;
 }
 
-export const DEFAULT_BATCH_CONFIG: BatchConfig = {
+export interface ModuleOptions extends BatchConfig {
+  repository?: Type<JobRepository>;
+}
+
+export const DEFAULT_MODULE_OPTIONS: ModuleOptions = {
   maxRetries: 0,
   retryDelay: 0,
   chunkSize: DEFAULT_CHUNK_SIZE,
