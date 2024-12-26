@@ -12,6 +12,12 @@ export class SimpleJob extends Job {
       .setStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
     try {
+      if (!this.name) {
+        throw new Error('Job name is required');
+      }
+      if (!this.jobRepository) {
+        throw new Error('Job repository is required');
+      }
       await this.jobRepository.saveJobExecution(jobExecution);
       await this.notifyListenersBeforeJob(jobExecution);
       await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
