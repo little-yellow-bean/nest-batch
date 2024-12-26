@@ -7,8 +7,8 @@
     "email": "brazel@foxmail.com"
   },
   "repository": "https://github.com/little-yellow-bean/nest-batch",
-  "private": true,
-  "license": "UNLICENSED",
+  "private": false,
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
