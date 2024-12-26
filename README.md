@@ -43,4 +43,4 @@ Example usage:
   }
 ```
 
-For more detialed usage please refer to the sample code under "github-api" module
+For more detailed usage please refer to the sample code under "github-api" module
