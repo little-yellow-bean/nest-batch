@@ -12,7 +12,7 @@ export class GithubJobListener implements JobListener {
   }
   async onJobError?(jobExecution: JobExecution, error: Error): Promise<void> {
     this.logger.error(
-      `Error in step: ${jobExecution.getName()}. Error: ${error.message}`,
+      `Error in job: ${jobExecution.getName()}. Error: ${error.message}`,
     );
   }
 }

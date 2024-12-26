@@ -6,6 +6,13 @@ export class SimpleJob extends Job {
   override async execute(
     parameters: Record<string, any>,
   ): Promise<JobExecution> {
+    if (!this.name?.trim().length) {
+      throw new Error('Job name is required');
+    }
+    if (!this.jobRepository) {
+      throw new Error('Job repository is required');
+    }
+
     const jobExecution = new JobExecution()
       .setId(uuid())
       .setCreateTime(new Date())
@@ -15,12 +22,6 @@ export class SimpleJob extends Job {
       .setLastUpdatedTime(new Date());
 
     try {
-      if (!this.name) {
-        throw new Error('Job name is required');
-      }
-      if (!this.jobRepository) {
-        throw new Error('Job repository is required');
-      }
       await this.jobRepository.saveJobExecution(jobExecution);
       await this.notifyListenersBeforeJob(jobExecution);
       await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {

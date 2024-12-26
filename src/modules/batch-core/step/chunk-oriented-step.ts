@@ -13,6 +13,10 @@ export class ChunkOrientedStep<I, O> extends Step<I, O> {
       throw new Error('Job Repository is required');
     }
 
+    if (!this.name?.trim()?.length) {
+      throw new Error('Step name is required');
+    }
+
     const stepExecution = new StepExecution()
       .setId(uuid())
       .setCreateTime(new Date())
