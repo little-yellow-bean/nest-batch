@@ -44,7 +44,7 @@ export class GithubApiService {
     const links = linkHeader.split(',').reduce((acc: any, link: string) => {
       const [url, rel] = link.split(';');
       const relName = rel.trim().replace(/"/g, '').split('=')[1];
-      acc[relName] = url.trim().slice(1, -1); // 去除 <> 符号
+      acc[relName] = url.trim().slice(1, -1);
       return acc;
     }, {});
     return links;
