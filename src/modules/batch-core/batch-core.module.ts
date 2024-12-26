@@ -24,7 +24,7 @@ export class BatchCoreModule {
         JobFactory,
         JobLauncher,
       ],
-      exports: [JobLauncher, JobFactory, BATCH_JOB_REPOSITORY],
+      exports: [JobLauncher, JobFactory, BATCH_JOB_REPOSITORY, BATCH_CONFIG],
     };
   }
 }

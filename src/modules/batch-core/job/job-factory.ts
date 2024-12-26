@@ -8,6 +8,7 @@ import { ItemProcessor } from '../processor';
 import { ItemWriter } from '../writer';
 import { JobListener, StepListener } from '../listener';
 import { PageOrientedStep } from '../step';
+import { Job } from './job';
 
 interface CreateStepPayload<I, O> {
   reader: ItemReader<I>;
@@ -17,11 +18,6 @@ interface CreateStepPayload<I, O> {
   chunkSize?: number;
   name: string;
 }
-interface CreateJobPayload {
-  name: string;
-  steps: CreateStepPayload<any, any>[];
-  listeners?: JobListener[];
-}
 
 @Injectable()
 export class JobFactory {
@@ -30,19 +26,44 @@ export class JobFactory {
     @Inject(BATCH_CONFIG) private config: BatchConfig,
   ) {}
 
-  createJob({ name, steps: stepsConfig, listeners }: CreateJobPayload) {
-    const job = new SimpleJob()
-      .setName(name)
-      .setJobRepository(this.jobRepository);
-    listeners?.forEach((listener) => job.addListener(listener));
-    const steps = stepsConfig.map((stepConfig) => this.createStep(stepConfig));
-    steps.forEach((step) => job.addStep(step));
-    return job;
+  jobBuilder(name: string) {
+    const builder = new SimpleJobBuilder(name, this.jobRepository, this.config);
+    return builder;
+  }
+}
+
+class SimpleJobBuilder {
+  private readonly job: Job;
+  constructor(
+    name: string,
+    private jobRepository: JobRepository,
+    private config: BatchConfig,
+  ) {
+    this.job = new SimpleJob().setName(name).setJobRepository(jobRepository);
   }
 
-  private createStep(stepConfig: CreateStepPayload<any, any>) {
-    const { reader, processor, writer, listeners, chunkSize, name } =
-      stepConfig;
+  listeners(listeners: JobListener[]) {
+    listeners.forEach((listener) => this.job.addListener(listener));
+    return this;
+  }
+
+  step<I, O>(step: CreateStepPayload<I, O>) {
+    this.job.addStep(this.createStep(step));
+    return this;
+  }
+
+  build() {
+    return this.job;
+  }
+
+  private createStep<I, O>({
+    reader,
+    processor,
+    writer,
+    listeners,
+    chunkSize,
+    name,
+  }: CreateStepPayload<I, O>) {
     const step = new PageOrientedStep()
       .setName(name)
       .setChunkSize(chunkSize || this.config.chunkSize)
