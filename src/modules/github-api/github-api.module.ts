@@ -5,7 +5,12 @@ import { GithubBatchService } from './services/github-batch/github-batch.service
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [BatchCoreModule.register(), HttpModule],
+  imports: [
+    BatchCoreModule.register({
+      chunkSize: 2,
+    }),
+    HttpModule,
+  ],
   providers: [GithubApiService, GithubBatchService],
 })
 export class GithubApiModule {}

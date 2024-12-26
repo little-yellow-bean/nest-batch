@@ -31,6 +31,6 @@ export class GithubBatchService {
       })
       .build();
     const jobExecution = await this.jobLauncher.run(job);
-    this.logger.log(jobExecution);
+    this.logger.log(`Job Execution Id: ${jobExecution.getId()}`);
   }
 }

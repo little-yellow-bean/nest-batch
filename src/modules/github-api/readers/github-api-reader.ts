@@ -2,6 +2,7 @@ import { ItemReader } from 'src/modules/batch-core/reader';
 import { GithubRepo } from '../models/github-api';
 import { GithubApiService } from '../services/github-api/github-api.service';
 
+const USER_NAME = 'little-yellow-bean';
 export class GithubApiReader implements ItemReader<GithubRepo> {
   private nextLink: string;
   private hasNext = true;
@@ -16,7 +17,7 @@ export class GithubApiReader implements ItemReader<GithubRepo> {
       this.hasNext = !!this.nextLink;
       return res.data;
     }
-    const res = await this.githubApiService.getUserRepos('little-yellow-bean');
+    const res = await this.githubApiService.getUserRepos(USER_NAME);
     this.nextLink = res.links.next;
     this.hasNext = !!this.nextLink;
     return res.data;

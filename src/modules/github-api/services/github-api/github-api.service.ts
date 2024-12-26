@@ -6,6 +6,7 @@ import { GithubApiResponse, GithubRepo } from '../../models/github-api';
 @Injectable()
 export class GithubApiService {
   private readonly githubApiUrl = 'https://api.github.com';
+  private readonly token = '<Update this to your Github personal access token>';
   constructor(private readonly httpService: HttpService) {}
 
   async getUserRepos(username: string): Promise<GithubApiResponse<GithubRepo>> {
@@ -24,7 +25,9 @@ export class GithubApiService {
 
   async requestRepos(url: string): Promise<GithubApiResponse<GithubRepo>> {
     try {
-      const response = await lastValueFrom(this.httpService.get(url));
+      const response = await lastValueFrom(
+        this.httpService.get(url, { headers: { Authorization: this.token } }),
+      );
       return {
         data: response.data,
         links: this.buildLinks(response.headers.link),
