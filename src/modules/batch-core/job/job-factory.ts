@@ -3,11 +3,11 @@ import { BATCH_CONFIG, BATCH_JOB_REPOSITORY } from '../constants';
 import { JobRepository } from '../repository';
 import { BatchConfig } from '../config';
 import { SimpleJob } from './simple-job';
-import { ItemReader } from '../reader';
+import { ItemReader, PaginableReader } from '../reader';
 import { ItemProcessor } from '../processor';
 import { ItemWriter } from '../writer';
 import { JobListener, StepListener } from '../listener';
-import { PageOrientedStep } from '../step';
+import { ChunkOrientedStep, PageOrientedStep } from '../step';
 import { Job } from './job';
 
 interface CreateStepPayload<I, O> {
@@ -64,7 +64,11 @@ class SimpleJobBuilder {
     chunkSize,
     name,
   }: CreateStepPayload<I, O>) {
-    const step = new PageOrientedStep()
+    const step = (
+      reader instanceof PaginableReader
+        ? new PageOrientedStep()
+        : new ChunkOrientedStep()
+    )
       .setName(name)
       .setChunkSize(chunkSize || this.config.chunkSize)
       .setJobRepository(this.jobRepository)

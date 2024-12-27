@@ -1,16 +1,16 @@
-import { ItemReader } from 'src/modules/batch-core/reader';
+import { PaginableReader } from 'src/modules/batch-core/reader';
 import { GithubRepo } from '../models/github-api';
 import { GithubApiService } from '../services/github-api/github-api.service';
 
 const USER_NAME = 'little-yellow-bean';
-export class GithubApiReader implements ItemReader<GithubRepo> {
+export class GithubApiReader extends PaginableReader<GithubRepo> {
   private nextLink: string;
   private hasNext = true;
-  constructor(private githubApiService: GithubApiService) {}
-  async read(): Promise<GithubRepo[]> {
-    if (!this.hasNext) {
-      return null;
-    }
+  constructor(private githubApiService: GithubApiService) {
+    super();
+  }
+
+  override async readPage(): Promise<GithubRepo[]> {
     if (this.nextLink) {
       const res = await this.githubApiService.requestRepos(this.nextLink);
       this.nextLink = res.links.next;
@@ -21,5 +21,9 @@ export class GithubApiReader implements ItemReader<GithubRepo> {
     this.nextLink = res.links.next;
     this.hasNext = !!this.nextLink;
     return res.data;
+  }
+
+  override hasNextPage(): boolean {
+    return this.hasNext;
   }
 }
