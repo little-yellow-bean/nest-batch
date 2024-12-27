@@ -13,7 +13,6 @@ export class JobExecution extends BaseExecution {
   }
 
   override from(execution: JobExecution) {
-    super.from(execution);
-    return this.setJobParameters(execution.getJobParameters());
+    return super.from(execution).setJobParameters(execution.getJobParameters());
   }
 }

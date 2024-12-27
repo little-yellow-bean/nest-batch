@@ -169,6 +169,7 @@ export abstract class BaseExecution {
     this.setEndTime(execution.getEndTime());
     this.setExitStatus(execution.getExitStatus());
     this.setFailureExceptions(execution.getFailureExceptions());
+    return this;
   }
 
   private isValidTransition(newStatus: ExecutionStatus): boolean {
