@@ -17,7 +17,7 @@ export class GithubBatchService {
     private githubApiService: GithubApiService,
     private mongoRepository: MongoJobRepository,
   ) {
-    this.runBatch();
+    // this.runBatch();
   }
 
   async runBatch() {

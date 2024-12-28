@@ -53,7 +53,7 @@ export class SimpleJob extends Job {
         lastUpdatedTime: new Date(),
         failureExceptions: [error.message],
       });
-      this.notifyListenersOnError(jobExecution, error);
+      await this.notifyListenersOnError(jobExecution, error);
       this.logger.error(`Job ${this.name} failed: ${error}`);
       throw error;
     }
