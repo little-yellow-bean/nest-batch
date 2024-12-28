@@ -1,4 +1,4 @@
-interface Env {
+export interface Env {
   mongoConnectionUrl: string;
 }
 

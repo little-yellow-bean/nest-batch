@@ -24,7 +24,7 @@ export class GithubBatchService {
     const job = this.jobFactory
       .jobBuilder('Github-api-bacth-job')
       .listeners([new GithubJobListener()])
-      // .repository(this.mongoRepository)
+      .repository(this.mongoRepository)
       .addStep({
         reader: new GithubApiReader(this.githubApiService),
         processor: new GithubApiProcessor(),

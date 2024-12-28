@@ -22,13 +22,14 @@ export class ChunkOrientedStep<I, O> extends Step<I, O> {
       .setCreateTime(new Date())
       .setJobExecution(jobExecution)
       .setName(this.name)
-      .setStatus(ExecutionStatus.CREATED)
+      .transitionStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
 
     await this.jobRepository.saveStepExecution(stepExecution);
     await this.notifyListenersBeforeStep(stepExecution);
     await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
       status: ExecutionStatus.STARTING,
+      startTime: new Date(),
       lastUpdatedTime: new Date(),
     });
 

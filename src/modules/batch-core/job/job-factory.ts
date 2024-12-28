@@ -21,8 +21,8 @@ interface CreateStepPayload<I, O> {
 
 @Injectable()
 export class JobFactory {
-  private defaultJobRepositiory = new InMemoryJobRepository();
-  constructor(@Inject(BATCH_CONFIG) private config: ModuleOptions) {}
+  private readonly defaultJobRepositiory = new InMemoryJobRepository();
+  constructor(@Inject(BATCH_CONFIG) private readonly config: ModuleOptions) {}
 
   jobBuilder(name: string) {
     const builder = new SimpleJobBuilder(
@@ -39,7 +39,7 @@ class SimpleJobBuilder {
   constructor(
     name: string,
     private jobRepository: JobRepository,
-    private config: ModuleOptions,
+    private readonly config: ModuleOptions,
   ) {
     this.job = new SimpleJob().setName(name).setJobRepository(jobRepository);
   }

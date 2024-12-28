@@ -61,12 +61,17 @@ export abstract class BaseExecution {
     return this;
   }
 
-  setStatus(status: ExecutionStatus) {
+  transitionStatus(status: ExecutionStatus) {
     if (!this.isValidTransition(status)) {
       throw new Error(
         `Invalid status transition from ${this.status} to ${status}`,
       );
     }
+    this.status = status;
+    return this;
+  }
+
+  setStatus(status: ExecutionStatus) {
     this.status = status;
     return this;
   }

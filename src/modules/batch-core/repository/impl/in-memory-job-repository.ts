@@ -43,6 +43,7 @@ export class InMemoryJobRepository implements JobRepository {
     id: string,
     {
       status,
+      startTime,
       endTime,
       exitStatus,
       failureExceptions,
@@ -54,7 +55,10 @@ export class InMemoryJobRepository implements JobRepository {
       throw new Error('Job execution not found');
     }
     if (status) {
-      copy.setStatus(status);
+      copy.transitionStatus(status);
+    }
+    if (startTime) {
+      copy.setStartTime(startTime);
     }
     if (endTime) {
       copy.setEndTime(endTime);
@@ -75,6 +79,7 @@ export class InMemoryJobRepository implements JobRepository {
     id: string,
     {
       status,
+      startTime,
       endTime,
       exitStatus,
       failureExceptions,
@@ -86,7 +91,10 @@ export class InMemoryJobRepository implements JobRepository {
       throw new Error('Step execution not found');
     }
     if (status) {
-      copy.setStatus(status);
+      copy.transitionStatus(status);
+    }
+    if (startTime) {
+      copy.setStartTime(startTime);
     }
     if (endTime) {
       copy.setEndTime(endTime);

@@ -18,7 +18,7 @@ export class SimpleJob extends Job {
       .setCreateTime(new Date())
       .setJobParameters(parameters)
       .setName(this.name)
-      .setStatus(ExecutionStatus.CREATED)
+      .transitionStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
 
     try {
@@ -26,6 +26,7 @@ export class SimpleJob extends Job {
       await this.notifyListenersBeforeJob(jobExecution);
       await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
         status: ExecutionStatus.STARTING,
+        startTime: new Date(),
         lastUpdatedTime: new Date(),
       });
       // TODO: Add pre-started works in the future

@@ -8,6 +8,7 @@ export interface ExecutionFilter {
 
 interface UpdateExecutionPayload {
   status?: ExecutionStatus;
+  startTime?: Date;
   endTime?: Date;
   exitStatus?: string;
   failureExceptions?: string[];
