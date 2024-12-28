@@ -1,18 +1,22 @@
 import { Module } from '@nestjs/common';
-import { BatchCoreModule } from '../batch-core/batch-core.module';
 import { GithubApiService } from './services/github-api/github-api.service';
 import { GithubBatchService } from './services/github-batch/github-batch.service';
 import { HttpModule } from '@nestjs/axios';
-// import { FakeRepository } from './repository/fake-repository';
+import { ConfigModule } from '@nestjs/config';
+import { env } from './config';
+import { BatchCoreModule } from '../batch-core/batch-core.module';
+import { MongoJobRepository } from './repository/mongo-job-repository/mongo-job-repository.service';
 
 @Module({
   imports: [
     BatchCoreModule.register({
       chunkSize: 2,
-      // repository: FakeRepository,
     }),
     HttpModule,
+    ConfigModule.forRoot({
+      load: [env],
+    }),
   ],
-  providers: [GithubApiService, GithubBatchService],
+  providers: [GithubApiService, GithubBatchService, MongoJobRepository],
 })
 export class GithubApiModule {}

@@ -14,6 +14,10 @@ export abstract class Job {
 
   abstract execute(parameters: Record<string, any>): Promise<JobExecution>;
 
+  getSteps() {
+    return this.steps;
+  }
+
   addStep(step: Step<any, any>) {
     this.steps.push(step);
     return this;

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { BATCH_CONFIG, BATCH_JOB_REPOSITORY } from '../constants';
-import { JobRepository } from '../repository';
-import { BatchConfig } from '../config';
+import { BATCH_CONFIG } from '../constants';
+import { InMemoryJobRepository, JobRepository } from '../repository';
+import { ModuleOptions } from '../config';
 import { SimpleJob } from './simple-job';
 import { ItemReader, PaginableReader } from '../reader';
 import { ItemProcessor } from '../processor';
@@ -21,13 +21,15 @@ interface CreateStepPayload<I, O> {
 
 @Injectable()
 export class JobFactory {
-  constructor(
-    @Inject(BATCH_JOB_REPOSITORY) private jobRepository: JobRepository,
-    @Inject(BATCH_CONFIG) private config: BatchConfig,
-  ) {}
+  private defaultJobRepositiory = new InMemoryJobRepository();
+  constructor(@Inject(BATCH_CONFIG) private config: ModuleOptions) {}
 
   jobBuilder(name: string) {
-    const builder = new SimpleJobBuilder(name, this.jobRepository, this.config);
+    const builder = new SimpleJobBuilder(
+      name,
+      this.defaultJobRepositiory,
+      this.config,
+    );
     return builder;
   }
 }
@@ -37,9 +39,18 @@ class SimpleJobBuilder {
   constructor(
     name: string,
     private jobRepository: JobRepository,
-    private config: BatchConfig,
+    private config: ModuleOptions,
   ) {
     this.job = new SimpleJob().setName(name).setJobRepository(jobRepository);
+  }
+
+  repository(repository: JobRepository) {
+    this.jobRepository = repository;
+    this.job.setJobRepository(this.jobRepository);
+    this.job
+      .getSteps()
+      .forEach((step) => step.setJobRepository(this.jobRepository));
+    return this;
   }
 
   listeners(listeners: JobListener[]) {
@@ -47,7 +58,7 @@ class SimpleJobBuilder {
     return this;
   }
 
-  step<I, O>(step: CreateStepPayload<I, O>) {
+  addStep<I, O>(step: CreateStepPayload<I, O>) {
     this.job.addStep(this.createStep(step));
     return this;
   }

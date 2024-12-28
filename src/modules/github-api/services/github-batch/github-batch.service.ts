@@ -6,6 +6,7 @@ import { GithubStepListener } from '../../listeners/github-step-listener';
 import { GithubApiReader } from '../../readers/github-api-reader';
 import { GithubApiProcessor } from '../../processors/github-api-processor';
 import { GithubApiWriter } from '../../writers/github-api-writer';
+import { MongoJobRepository } from '../../repository/mongo-job-repository/mongo-job-repository.service';
 
 @Injectable()
 export class GithubBatchService {
@@ -14,20 +15,22 @@ export class GithubBatchService {
     private readonly jobLauncher: JobLauncher,
     private readonly jobFactory: JobFactory,
     private githubApiService: GithubApiService,
+    private mongoRepository: MongoJobRepository,
   ) {
-    // this.runBatch();
+    this.runBatch();
   }
 
   async runBatch() {
     const job = this.jobFactory
       .jobBuilder('Github-api-bacth-job')
       .listeners([new GithubJobListener()])
-      .step({
+      // .repository(this.mongoRepository)
+      .addStep({
         reader: new GithubApiReader(this.githubApiService),
         processor: new GithubApiProcessor(),
         writer: new GithubApiWriter(),
         listeners: [new GithubStepListener()],
-        name: 'Github-repo-processing',
+        name: 'Github-repo-processing-step',
       })
       .build();
     const jobExecution = await this.jobLauncher.run(job);

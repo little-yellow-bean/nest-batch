@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { JobExecution, StepExecution } from 'src/modules/batch-core/execution';
 import {
   ExecutionFilter,
@@ -6,7 +7,8 @@ import {
   UpdateStepExecutionPayload,
 } from 'src/modules/batch-core/repository';
 
-export class FakeRepository implements JobRepository {
+@Injectable()
+export class MongoJobRepository implements JobRepository {
   saveJobExecution(execution: JobExecution): Promise<JobExecution> {
     throw new Error('Method not implemented.');
   }
