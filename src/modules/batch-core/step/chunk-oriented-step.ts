@@ -17,7 +17,7 @@ export class ChunkOrientedStep<I, O> extends Step<I, O> {
       throw new Error('Step name is required');
     }
 
-    const stepExecution = new StepExecution()
+    let stepExecution = new StepExecution()
       .setId(uuid())
       .setCreateTime(new Date())
       .setJobExecution(jobExecution)
@@ -25,38 +25,43 @@ export class ChunkOrientedStep<I, O> extends Step<I, O> {
       .transitionStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
     try {
-      await this.jobRepository.saveStepExecution(stepExecution);
+      stepExecution = await this.jobRepository.saveStepExecution(stepExecution);
       await this.notifyListenersBeforeStep(stepExecution);
-      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-        status: ExecutionStatus.STARTING,
-        startTime: new Date(),
-        lastUpdatedTime: new Date(),
-      });
+
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.STARTING)
+          .setStartTime(new Date())
+          .setLastUpdatedTime(new Date()),
+      );
 
       // TODO: Add pre-started works in the future
-      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-        status: ExecutionStatus.STARTED,
-        lastUpdatedTime: new Date(),
-      });
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.STARTED)
+          .setLastUpdatedTime(new Date()),
+      );
 
       await this.processItems();
 
-      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-        status: ExecutionStatus.COMPLETED,
-        endTime: new Date(),
-        lastUpdatedTime: new Date(),
-      });
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.COMPLETED)
+          .setEndTime(new Date())
+          .setLastUpdatedTime(new Date()),
+      );
 
       await this.notifyListenersAfterStep(stepExecution);
       this.logger.log(`Step ${this.name} completed successfully`);
       return stepExecution;
     } catch (error) {
-      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-        status: ExecutionStatus.FAILED,
-        endTime: new Date(),
-        lastUpdatedTime: new Date(),
-        failureExceptions: [error.message],
-      });
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.FAILED)
+          .setEndTime(new Date())
+          .setLastUpdatedTime(new Date())
+          .setFailureExceptions([error.message]),
+      );
       await this.notifyListenersOnError(stepExecution, error);
       this.logger.error(`Step ${this.name} failed: ${error}`);
       throw error;

@@ -5,8 +5,6 @@ import { JobExecution, StepExecution } from 'src/modules/batch-core/execution';
 import {
   ExecutionFilter,
   JobRepository,
-  UpdateJobExecutionPayload,
-  UpdateStepExecutionPayload,
 } from 'src/modules/batch-core/repository';
 import {
   JobExecutionModel,
@@ -55,6 +53,7 @@ export class MongoJobRepository implements JobRepository {
       },
       {
         status: execution.getStatus(),
+        startTime: execution.getStartTime(),
         endTime: execution.getEndTime(),
         exitStatus: execution.getExitStatus(),
         failureExceptions: execution.getFailureExceptions(),
@@ -70,46 +69,16 @@ export class MongoJobRepository implements JobRepository {
       },
       {
         status: execution.getStatus(),
+        startTime: execution.getStartTime(),
         endTime: execution.getEndTime(),
         exitStatus: execution.getExitStatus(),
         failureExceptions: execution.getFailureExceptions(),
       },
-      { populate: 'jobExecution' },
+      { populate: 'jobExecution', new: true },
     );
     return this.buildStepExecutionFromModel(updated);
   }
-  async updateJobExecutionById(
-    id: string,
-    payload: UpdateJobExecutionPayload,
-  ): Promise<JobExecution> {
-    delete payload.lastUpdatedTime;
-    const updated = await this.jobExecutionModel.findOneAndUpdate(
-      {
-        _id: id,
-      },
-      payload,
-      { new: true },
-    );
 
-    const jobExecution = this.buildJobExecutionFromModel(updated);
-    return jobExecution;
-  }
-  async updateStepExecutionById(
-    id: string,
-    payload: UpdateStepExecutionPayload,
-  ): Promise<StepExecution> {
-    delete payload.lastUpdatedTime;
-    const updated = await this.stepExecutionModel.findOneAndUpdate(
-      {
-        _id: id,
-      },
-      payload,
-      { new: true, populate: 'jobExecution' },
-    );
-
-    const updatedStepExecution = this.buildStepExecutionFromModel(updated);
-    return updatedStepExecution;
-  }
   async findJobExecutionById(id: string): Promise<JobExecution | null> {
     const result = await this.jobExecutionModel.findById(id);
     return this.buildJobExecutionFromModel(result);

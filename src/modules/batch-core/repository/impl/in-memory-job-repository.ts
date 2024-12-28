@@ -1,10 +1,5 @@
 import { JobExecution, StepExecution } from '../../execution';
-import {
-  JobRepository,
-  ExecutionFilter,
-  UpdateJobExecutionPayload,
-  UpdateStepExecutionPayload,
-} from '../job-repository.model';
+import { JobRepository, ExecutionFilter } from '../job-repository.model';
 
 export class InMemoryJobRepository implements JobRepository {
   private jobExecutions: Map<string, JobExecution> = new Map();
@@ -37,78 +32,6 @@ export class InMemoryJobRepository implements JobRepository {
       new StepExecution().from(execution),
     );
     return execution;
-  }
-
-  async updateJobExecutionById(
-    id: string,
-    {
-      status,
-      startTime,
-      endTime,
-      exitStatus,
-      failureExceptions,
-      lastUpdatedTime,
-    }: UpdateJobExecutionPayload,
-  ): Promise<JobExecution> {
-    const copy = await this.findJobExecutionById(id);
-    if (!copy) {
-      throw new Error('Job execution not found');
-    }
-    if (status) {
-      copy.transitionStatus(status);
-    }
-    if (startTime) {
-      copy.setStartTime(startTime);
-    }
-    if (endTime) {
-      copy.setEndTime(endTime);
-    }
-    if (exitStatus) {
-      copy.setExitStatus(exitStatus);
-    }
-    if (failureExceptions) {
-      copy.setFailureExceptions(failureExceptions);
-    }
-    if (lastUpdatedTime) {
-      copy.setLastUpdatedTime(lastUpdatedTime);
-    }
-    return this.updateJobExecution(copy);
-  }
-
-  async updateStepExecutionById(
-    id: string,
-    {
-      status,
-      startTime,
-      endTime,
-      exitStatus,
-      failureExceptions,
-      lastUpdatedTime,
-    }: UpdateStepExecutionPayload,
-  ): Promise<StepExecution> {
-    const copy = await this.findStepExecutionById(id);
-    if (!copy) {
-      throw new Error('Step execution not found');
-    }
-    if (status) {
-      copy.transitionStatus(status);
-    }
-    if (startTime) {
-      copy.setStartTime(startTime);
-    }
-    if (endTime) {
-      copy.setEndTime(endTime);
-    }
-    if (exitStatus) {
-      copy.setExitStatus(exitStatus);
-    }
-    if (failureExceptions) {
-      copy.setFailureExceptions(failureExceptions);
-    }
-    if (lastUpdatedTime) {
-      copy.setLastUpdatedTime(lastUpdatedTime);
-    }
-    return this.updateStepExecution(copy);
   }
 
   async findJobExecutionById(id: string) {

@@ -13,7 +13,7 @@ export class SimpleJob extends Job {
       throw new Error('Job repository is required');
     }
 
-    const jobExecution = new JobExecution()
+    let jobExecution = new JobExecution()
       .setId(uuid())
       .setCreateTime(new Date())
       .setJobParameters(parameters)
@@ -22,37 +22,41 @@ export class SimpleJob extends Job {
       .setLastUpdatedTime(new Date());
 
     try {
-      await this.jobRepository.saveJobExecution(jobExecution);
+      jobExecution = await this.jobRepository.saveJobExecution(jobExecution);
       await this.notifyListenersBeforeJob(jobExecution);
-      await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-        status: ExecutionStatus.STARTING,
-        startTime: new Date(),
-        lastUpdatedTime: new Date(),
-      });
+      jobExecution = await this.jobRepository.updateJobExecution(
+        jobExecution
+          .transitionStatus(ExecutionStatus.STARTING)
+          .setStartTime(new Date())
+          .setLastUpdatedTime(new Date()),
+      );
       // TODO: Add pre-started works in the future
-      await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-        status: ExecutionStatus.STARTED,
-        lastUpdatedTime: new Date(),
-      });
+      jobExecution = await this.jobRepository.updateJobExecution(
+        jobExecution
+          .transitionStatus(ExecutionStatus.STARTED)
+          .setLastUpdatedTime(new Date()),
+      );
 
-      this.processSteps(jobExecution.getId()).catch(async (error) => {
-        await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-          status: ExecutionStatus.FAILED,
-          endTime: new Date(),
-          lastUpdatedTime: new Date(),
-          failureExceptions: [error.message],
-        });
+      this.processSteps(jobExecution.getId()).catch(async (error: Error) => {
+        await this.jobRepository.updateJobExecution(
+          jobExecution
+            .transitionStatus(ExecutionStatus.FAILED)
+            .setEndTime(new Date())
+            .setLastUpdatedTime(new Date())
+            .setFailureExceptions([error.message]),
+        );
         await this.notifyListenersOnError(jobExecution, error);
         this.logger.error(`Job ${this.name} failed: ${error}`);
       });
       return jobExecution;
     } catch (error) {
-      await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-        status: ExecutionStatus.FAILED,
-        endTime: new Date(),
-        lastUpdatedTime: new Date(),
-        failureExceptions: [error.message],
-      });
+      await this.jobRepository.updateJobExecution(
+        jobExecution
+          .transitionStatus(ExecutionStatus.FAILED)
+          .setEndTime(new Date())
+          .setLastUpdatedTime(new Date())
+          .setFailureExceptions([error.message]),
+      );
       await this.notifyListenersOnError(jobExecution, error);
       this.logger.error(`Job ${this.name} failed: ${error}`);
       throw error;
@@ -64,21 +68,23 @@ export class SimpleJob extends Job {
     for (const step of this.steps) {
       jobExecution = await this.jobRepository.findJobExecutionById(jobId);
       if (jobExecution.isStopping()) {
-        await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-          status: ExecutionStatus.STOPPED,
-          endTime: new Date(),
-          lastUpdatedTime: new Date(),
-        });
+        await this.jobRepository.updateJobExecution(
+          jobExecution
+            .transitionStatus(ExecutionStatus.STOPPED)
+            .setEndTime(new Date())
+            .setLastUpdatedTime(new Date()),
+        );
         this.logger.log(`Job ${this.name} is stopped`);
         return;
       }
       await step.execute(jobExecution);
     }
-    await this.jobRepository.updateJobExecutionById(jobExecution.getId(), {
-      status: ExecutionStatus.COMPLETED,
-      endTime: new Date(),
-      lastUpdatedTime: new Date(),
-    });
+    await this.jobRepository.updateJobExecution(
+      jobExecution
+        .transitionStatus(ExecutionStatus.COMPLETED)
+        .setEndTime(new Date())
+        .setLastUpdatedTime(new Date()),
+    );
     await this.notifyListenersAfterJob(jobExecution);
     this.logger.log(`Job ${this.name} completed successfully`);
   }
