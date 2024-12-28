@@ -24,7 +24,9 @@ export class StepExecution extends BaseExecution {
 
   override from(stepExecution: StepExecution) {
     super.from(stepExecution);
-    this.jobExecution = new JobExecution().from(stepExecution.jobExecution);
+    this.jobExecution = new JobExecution().from(
+      stepExecution.getJobExecution(),
+    );
     return this;
   }
 }

@@ -169,7 +169,7 @@ export abstract class BaseExecution {
     this.setName(execution.getName());
     this.setCreateTime(execution.getCreateTime());
     this.setLastUpdatedTime(execution.getLastUpdatedTime());
-    this.status = execution.status;
+    this.setStatus(execution.getStatus());
     this.setStartTime(execution.getStartTime());
     this.setEndTime(execution.getEndTime());
     this.setExitStatus(execution.getExitStatus());
