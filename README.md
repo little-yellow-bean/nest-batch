@@ -33,7 +33,7 @@ Example usage:
         processor: new GithubApiProcessor(),
         writer: new GithubApiWriter(),
         listeners: [new GithubStepListener()],
-        name: 'Github-repo-processing',
+        name: 'Github-repo-processing-step',
       })
       .build();
 
