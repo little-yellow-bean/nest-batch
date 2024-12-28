@@ -24,22 +24,21 @@ export class ChunkOrientedStep<I, O> extends Step<I, O> {
       .setName(this.name)
       .transitionStatus(ExecutionStatus.CREATED)
       .setLastUpdatedTime(new Date());
-
-    await this.jobRepository.saveStepExecution(stepExecution);
-    await this.notifyListenersBeforeStep(stepExecution);
-    await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-      status: ExecutionStatus.STARTING,
-      startTime: new Date(),
-      lastUpdatedTime: new Date(),
-    });
-
-    // TODO: Add pre-started works in the future
-    await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
-      status: ExecutionStatus.STARTED,
-      lastUpdatedTime: new Date(),
-    });
-
     try {
+      await this.jobRepository.saveStepExecution(stepExecution);
+      await this.notifyListenersBeforeStep(stepExecution);
+      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
+        status: ExecutionStatus.STARTING,
+        startTime: new Date(),
+        lastUpdatedTime: new Date(),
+      });
+
+      // TODO: Add pre-started works in the future
+      await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
+        status: ExecutionStatus.STARTED,
+        lastUpdatedTime: new Date(),
+      });
+
       await this.processItems();
 
       await this.jobRepository.updateStepExecutionById(stepExecution.getId(), {
