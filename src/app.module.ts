@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GithubApiModule } from './modules/github-api/github-api.module';
@@ -11,6 +12,7 @@ import { Env, env } from './config';
     ConfigModule.forRoot({
       load: [env],
     }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       useFactory: (config: ConfigService<Env>) => ({
         uri: config.get('mongoConnectionUrl'),

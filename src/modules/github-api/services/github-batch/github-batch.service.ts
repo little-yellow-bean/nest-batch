@@ -7,6 +7,7 @@ import { GithubApiReader } from '../../readers/github-api-reader';
 import { GithubApiProcessor } from '../../processors/github-api-processor';
 import { GithubApiWriter } from '../../writers/github-api-writer';
 import { MongoJobRepository } from '../../repository/mongo-job-repository/mongo-job-repository.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class GithubBatchService {
@@ -14,12 +15,11 @@ export class GithubBatchService {
   constructor(
     private readonly jobLauncher: JobLauncher,
     private readonly jobFactory: JobFactory,
-    private githubApiService: GithubApiService,
-    private mongoRepository: MongoJobRepository,
-  ) {
-    // this.runBatch();
-  }
+    private readonly githubApiService: GithubApiService,
+    private readonly mongoRepository: MongoJobRepository,
+  ) {}
 
+  @Cron(CronExpression.EVERY_MINUTE)
   async runBatch() {
     const job = this.jobFactory
       .jobBuilder('Github-api-bacth-job')
