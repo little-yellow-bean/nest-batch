@@ -6,7 +6,9 @@ Example usage:
 // Import the Batch module into your module
 @Module({
   imports: [
-    BatchCoreModule.register(),
+    BatchCoreModule.register({
+      chunkSize: 2,
+    }),
   ],
   providers: [],
 })
@@ -18,16 +20,18 @@ Example usage:
   constructor(
     private readonly jobLauncher: JobLauncher,
     private readonly jobFactory: JobFactory,
-    private githubApiService: GithubApiService,
-  ) {
-    this.runBatch();
-  }
-  async runBatch() {
+    private readonly githubApiService: GithubApiService,
+    private readonly mongoRepository: MongoJobRepository,
+  ) {}
 
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async runBatch() {
     // Create the batch job instance
     const job = this.jobFactory
       .jobBuilder('Github-api-bacth-job')
       .listeners([new GithubJobListener()])
+      .repository(this.mongoRepository)
       .addStep({
         reader: new GithubApiReader(this.githubApiService),
         processor: new GithubApiProcessor(),
