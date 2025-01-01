@@ -19,7 +19,7 @@ export class GithubBatchService {
     private readonly mongoRepository: MongoJobRepository,
   ) {}
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async runBatch() {
     const job = this.jobFactory
       .jobBuilder('Github-api-bacth-job')
