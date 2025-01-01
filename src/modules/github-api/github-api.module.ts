@@ -16,6 +16,8 @@ import {
   imports: [
     BatchCoreModule.register({
       chunkSize: 2,
+      maxRetries: 3,
+      retryDelay: 3000,
     }),
     MongooseModule.forFeature([
       { name: JobExecutionModel.name, schema: JobExecutionSchema },

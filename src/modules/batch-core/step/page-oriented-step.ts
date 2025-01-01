@@ -1,7 +1,7 @@
 import { chunkArray } from '../utils';
-import { ChunkOrientedStep } from './chunk-oriented-step';
+import { Step } from './step';
 
-export class PageOrientedStep<I, O> extends ChunkOrientedStep<I, O> {
+export class PageOrientedStep<I, O> extends Step<I, O> {
   override async processItems() {
     let items = await this.reader.read();
     let processedItems: O[] = [];

@@ -10,14 +10,13 @@ import { JobListener, StepListener } from '../listener';
 import { ChunkOrientedStep, PageOrientedStep } from '../step';
 import { Job } from './job';
 
-interface CreateStepPayload<I, O> {
+type CreateStepPayload<I, O> = {
   reader: ItemReader<I>;
   processor?: ItemProcessor<I, O>;
   writer: ItemWriter<O>;
   listeners?: StepListener[];
-  chunkSize?: number;
   name: string;
-}
+} & ModuleOptions;
 
 @Injectable()
 export class JobFactory {
@@ -73,6 +72,9 @@ class SimpleJobBuilder {
     writer,
     listeners,
     chunkSize,
+    maxRetries,
+    retryDelay,
+    shouldRetry,
     name,
   }: CreateStepPayload<I, O>) {
     const step = (
@@ -82,6 +84,9 @@ class SimpleJobBuilder {
     )
       .setName(name)
       .setChunkSize(chunkSize || this.config.chunkSize)
+      .setMaxretries(maxRetries || this.config.maxRetries)
+      .setRetryDelay(retryDelay || this.config.retryDelay)
+      .setShouldRetry(shouldRetry || this.config.shouldRetry)
       .setJobRepository(this.jobRepository)
       .setReader(reader)
       .setProcessor(processor)
