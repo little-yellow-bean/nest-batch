@@ -1,0 +1,33 @@
+{
+  "name": "nest-batch",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/nest-batch/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/nest-batch",
+        "tsConfig": "libs/nest-batch/tsconfig.lib.json",
+        "packageJson": "libs/nest-batch/package.json",
+        "main": "libs/nest-batch/src/index.ts",
+        "assets": ["libs/nest-batch/*.md"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  }
+}

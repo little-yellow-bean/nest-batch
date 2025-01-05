@@ -6,11 +6,10 @@ Example usage:
 // Import the Batch module into your module
 @Module({
   imports: [
-    BatchCoreModule.register({
+    NestBatchModule.register({
       chunkSize: 2,
     }),
-  ],
-  providers: [],
+  ]
 })
 
 ```
@@ -47,4 +46,4 @@ Example usage:
   }
 ```
 
-For more detailed usage please refer to the sample code under "github-api" module
+For more detailed usage please refer to the sample code under `apps/github-api`
