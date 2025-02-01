@@ -1,9 +1,9 @@
-import { PaginableReader } from 'nest-batch';
+import { PaginatedReader } from 'nest-batch';
 import { GithubRepo } from '../models/github-api';
 import { GithubApiService } from '../services/github-api/github-api.service';
 
 const USER_NAME = 'little-yellow-bean';
-export class GithubApiReader extends PaginableReader<GithubRepo> {
+export class GithubApiReader extends PaginatedReader<GithubRepo> {
   private nextLink: string;
   private hasNext = true;
   constructor(private githubApiService: GithubApiService) {

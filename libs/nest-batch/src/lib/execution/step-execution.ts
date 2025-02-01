@@ -1,17 +1,47 @@
-import { BaseExecution } from './base-execution';
+import { BaseExecution, ExecutionOptions } from './base-execution';
 import { JobExecution } from './job-execution';
 
+export interface StepExecutionOptions extends ExecutionOptions {
+  readCount?: number;
+  writeCount?: number;
+  commitCount?: number;
+  rollbackCount?: number;
+  readSkipCount?: number;
+  processSkipCount?: number;
+  writeSkipCount?: number;
+}
+
 export class StepExecution extends BaseExecution {
-  private jobExecution: JobExecution;
+  jobExecution: JobExecution;
 
   // Reserving the following properties for future use
-  private readCount: number;
-  private writeCount: number;
-  private commitCount: number;
-  private rollbackCount: number;
-  private readSkipCount: number;
-  private processSkipCount: number;
-  private writeSkipCount: number;
+  readCount: number;
+  writeCount: number;
+  commitCount: number;
+  rollbackCount: number;
+  readSkipCount: number;
+  processSkipCount: number;
+  writeSkipCount: number;
+
+  constructor({
+    readCount,
+    writeCount,
+    commitCount,
+    rollbackCount,
+    readSkipCount,
+    processSkipCount,
+    writeSkipCount,
+    ...rest
+  }: StepExecutionOptions = {}) {
+    super(rest);
+    this.readCount = readCount || 0;
+    this.writeCount = writeCount || 0;
+    this.commitCount = commitCount || 0;
+    this.rollbackCount = rollbackCount || 0;
+    this.readSkipCount = readSkipCount || 0;
+    this.processSkipCount = processSkipCount || 0;
+    this.writeSkipCount = writeSkipCount || 0;
+  }
 
   setJobExecution(jobExecution: JobExecution) {
     this.jobExecution = jobExecution;
@@ -26,7 +56,7 @@ export class StepExecution extends BaseExecution {
     return super
       .from(stepExecution)
       .setJobExecution(
-        new JobExecution().from(stepExecution.getJobExecution()),
+        new JobExecution().from(stepExecution.getJobExecution())
       );
   }
 }

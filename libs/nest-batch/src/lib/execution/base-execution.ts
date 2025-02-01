@@ -1,3 +1,5 @@
+import { v4 as uuid } from 'uuid';
+
 export enum ExecutionStatus {
   CREATED = 'CREATED',
   STARTING = 'STARTING',
@@ -10,7 +12,10 @@ export enum ExecutionStatus {
   ABANDONED = 'ABANDONED',
 }
 
-const VALID_TRANSITIONS: Record<ExecutionStatus, ExecutionStatus[]> = {
+const VALID_TRANSITIONS: Record<
+  ExecutionStatus,
+  ExecutionStatus[] | undefined
+> = {
   [ExecutionStatus.CREATED]: [
     ExecutionStatus.STARTING,
     ExecutionStatus.ABANDONED,
@@ -30,16 +35,40 @@ const VALID_TRANSITIONS: Record<ExecutionStatus, ExecutionStatus[]> = {
   [ExecutionStatus.ABANDONED]: [],
 };
 
+export interface ExecutionOptions {
+  id?: string;
+  name?: string;
+  status?: ExecutionStatus;
+  startTime?: Date;
+  endTime?: Date;
+  createdTime?: Date;
+  lastUpdatedTime?: Date;
+  exitStatus?: string;
+  failureExceptions?: string[];
+}
+
 export abstract class BaseExecution {
-  protected id: string;
-  protected name: string;
-  protected status: ExecutionStatus;
-  protected startTime: Date;
-  protected endTime: Date;
-  protected createTime: Date;
-  protected lastUpdatedTime: Date;
-  protected exitStatus: string;
-  protected failureExceptions: string[] = [];
+  id: string;
+  name: string;
+  status: ExecutionStatus;
+  startTime?: Date;
+  endTime?: Date;
+  createTime: Date;
+  lastUpdatedTime: Date;
+  exitStatus: string;
+  failureExceptions: string[] = [];
+
+  constructor(options: ExecutionOptions = {}) {
+    this.id = options.id || uuid();
+    this.name = options.name || '';
+    this.status = options.status || ExecutionStatus.CREATED;
+    this.startTime = options.startTime;
+    this.endTime = options.endTime;
+    this.createTime = options.createdTime || new Date();
+    this.lastUpdatedTime = options.lastUpdatedTime || new Date();
+    this.exitStatus = options.exitStatus || '';
+    this.failureExceptions = options.failureExceptions || [];
+  }
 
   setId(id: string) {
     this.id = id;
@@ -64,7 +93,7 @@ export abstract class BaseExecution {
   transitionStatus(status: ExecutionStatus) {
     if (!this.isValidTransition(status)) {
       throw new Error(
-        `Invalid status transition from ${this.status} to ${status}`,
+        `Invalid status transition from ${this.status} to ${status}`
       );
     }
     this.status = status;
@@ -76,12 +105,12 @@ export abstract class BaseExecution {
     return this;
   }
 
-  setStartTime(startTime: Date) {
+  setStartTime(startTime?: Date) {
     this.startTime = startTime;
     return this;
   }
 
-  setEndTime(endTime: Date) {
+  setEndTime(endTime?: Date) {
     this.endTime = endTime;
     return this;
   }
@@ -113,11 +142,11 @@ export abstract class BaseExecution {
     return this.status;
   }
 
-  getStartTime(): Date {
+  getStartTime(): Date | undefined {
     return this.startTime;
   }
 
-  getEndTime(): Date {
+  getEndTime(): Date | undefined {
     return this.endTime;
   }
 
@@ -178,9 +207,7 @@ export abstract class BaseExecution {
   }
 
   private isValidTransition(newStatus: ExecutionStatus): boolean {
-    const allowedTransitions = VALID_TRANSITIONS[this.status] || [
-      ExecutionStatus.CREATED,
-    ];
+    const allowedTransitions = VALID_TRANSITIONS[this.status] || [];
 
     return allowedTransitions.includes(newStatus);
   }

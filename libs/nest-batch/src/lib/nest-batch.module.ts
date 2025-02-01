@@ -1,10 +1,11 @@
 import { DynamicModule, Module } from '@nestjs/common';
+
 import {
   ModuleOptions,
   DEFAULT_MODULE_OPTIONS,
   AsyncModuleOptions,
+  BatchConfig,
 } from './config';
-import { BATCH_CONFIG } from './constants';
 import { JobFactory, JobLauncher } from './job';
 
 @Module({})
@@ -14,13 +15,13 @@ export class NestBatchModule {
       module: NestBatchModule,
       providers: [
         {
-          provide: BATCH_CONFIG,
-          useValue: { ...DEFAULT_MODULE_OPTIONS, ...options },
+          provide: BatchConfig,
+          useValue: new BatchConfig({ ...DEFAULT_MODULE_OPTIONS, ...options }),
         },
         JobFactory,
         JobLauncher,
       ],
-      exports: [JobLauncher, JobFactory, BATCH_CONFIG],
+      exports: [JobLauncher, JobFactory, BatchConfig],
     };
   }
 
@@ -33,17 +34,17 @@ export class NestBatchModule {
       module: NestBatchModule,
       providers: [
         {
-          provide: BATCH_CONFIG,
+          provide: BatchConfig,
           useFactory: async (...providers) => {
             const options = await useFactory?.(...providers);
-            return { ...DEFAULT_MODULE_OPTIONS, ...options };
+            return new BatchConfig({ ...DEFAULT_MODULE_OPTIONS, ...options });
           },
           inject,
         },
         JobFactory,
         JobLauncher,
       ],
-      exports: [JobLauncher, JobFactory, BATCH_CONFIG],
+      exports: [JobLauncher, JobFactory, BatchConfig],
       imports,
     };
   }

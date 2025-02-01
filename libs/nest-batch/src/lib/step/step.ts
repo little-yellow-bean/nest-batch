@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
-import { ItemReader } from '../reader';
-import { ItemProcessor } from '../processor';
-import { ItemWriter } from '../writer';
-import { StepListener } from '../listener';
-import { ExecutionStatus, JobExecution, StepExecution } from '../execution';
-import { JobRepository } from '../repository';
+
 import { LIB_NAME } from '../constants';
+import { ExecutionStatus, JobExecution, StepExecution } from '../execution';
+import { StepListener } from '../listener';
+import { ItemProcessor } from '../processor';
+import { ItemReader } from '../reader';
+import { JobRepository } from '../repository';
 import { sleep } from '../utils';
+import { ItemWriter } from '../writer';
 
 export abstract class Step<I, O> {
   protected reader: ItemReader<I>;
@@ -20,100 +20,99 @@ export abstract class Step<I, O> {
   protected shouldRetry: (error: Error) => boolean;
   protected name: string;
   protected jobRepository: JobRepository;
+  protected parallelProcessing: boolean;
   protected readonly logger = new Logger(LIB_NAME);
 
+  constructor(name: string) {
+    if (!name.trim().length) {
+      throw new Error('Step name is required and cannot be empty');
+    }
+    this.name = name;
+  }
+
   async execute(jobExecution: JobExecution): Promise<StepExecution> {
-    if (!this.reader || !this.writer) {
-      throw new Error('Reader and writer must be configured');
-    }
-
-    if (!this.jobRepository) {
-      throw new Error('Job Repository is required');
-    }
-
-    if (!this.name?.trim()?.length) {
-      throw new Error('Step name is required');
-    }
-
-    let stepExecution = new StepExecution()
-      .setId(uuid())
-      .setCreateTime(new Date())
-      .setJobExecution(jobExecution)
-      .setName(this.name)
-      .transitionStatus(ExecutionStatus.CREATED)
-      .setLastUpdatedTime(new Date());
-
-    stepExecution = await this.jobRepository.saveStepExecution(stepExecution);
-    await this.notifyListenersBeforeStep(stepExecution);
-
-    stepExecution = await this.jobRepository.updateStepExecution(
-      stepExecution
-        .transitionStatus(ExecutionStatus.STARTING)
-        .setStartTime(new Date())
-        .setLastUpdatedTime(new Date())
+    let stepExecution = new StepExecution({ name: this.name }).setJobExecution(
+      jobExecution
     );
 
-    // TODO: Add pre-started works in the future
-    stepExecution = await this.jobRepository.updateStepExecution(
-      stepExecution
-        .transitionStatus(ExecutionStatus.STARTED)
-        .setLastUpdatedTime(new Date())
-    );
+    try {
+      stepExecution = await this.jobRepository.saveStepExecution(stepExecution);
+      await this.notifyListenersBeforeStep(stepExecution);
 
-    let retryCount = 0;
-    let lastError: Error;
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.STARTING)
+          .setStartTime(new Date())
+          .setLastUpdatedTime(new Date())
+      );
 
-    do {
-      try {
-        await this.processItems();
-        break;
-      } catch (error: any) {
-        if (retryCount < this.maxRetries && this.shouldRetry?.(error)) {
-          retryCount++;
-          this.logger.warn(
-            `Error occurred while executing step ${this.name}: ${error}. Retrying in ${this.retryDelay}ms`
-          );
-          await sleep(this.retryDelay);
-        } else {
-          lastError = error;
+      // TODO: Add pre-started works in the future
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.STARTED)
+          .setLastUpdatedTime(new Date())
+      );
+
+      let retryCount = 0;
+      let lastError: Error | undefined;
+
+      do {
+        try {
+          await this.processItems(stepExecution);
           break;
+        } catch (error) {
+          if (
+            retryCount < this.maxRetries &&
+            this.shouldRetry(error as Error)
+          ) {
+            retryCount++;
+            this.logger.warn(
+              `Error occurred while executing step ${this.name}: ${error}. Retrying in ${this.retryDelay}ms`
+            );
+            await sleep(this.retryDelay);
+          } else {
+            lastError = error as Error;
+            break;
+          }
         }
-      }
-    } while (retryCount <= this.maxRetries);
+      } while (retryCount <= this.maxRetries);
 
-    if (lastError) {
+      if (lastError) {
+        throw lastError;
+      }
+
+      stepExecution = await this.jobRepository.updateStepExecution(
+        stepExecution
+          .transitionStatus(ExecutionStatus.COMPLETED)
+          .setEndTime(new Date())
+          .setLastUpdatedTime(new Date())
+      );
+
+      await this.notifyListenersAfterStep(stepExecution);
+      this.logger.log(`Step ${this.name} completed successfully`);
+      return stepExecution;
+    } catch (error) {
       stepExecution = await this.jobRepository.updateStepExecution(
         stepExecution
           .transitionStatus(ExecutionStatus.FAILED)
           .setEndTime(new Date())
           .setLastUpdatedTime(new Date())
-          .setFailureExceptions([lastError.message])
+          .setFailureExceptions([(error as Error).message])
       );
-      await this.notifyListenersOnError(stepExecution, lastError);
-      this.logger.error(`Step ${this.name} failed: ${lastError}`);
-      throw lastError;
+      await this.notifyListenersOnError(stepExecution, error as Error);
+      this.logger.error(`Step ${this.name} failed: ${error}`);
+      throw error;
     }
-
-    stepExecution = await this.jobRepository.updateStepExecution(
-      stepExecution
-        .transitionStatus(ExecutionStatus.COMPLETED)
-        .setEndTime(new Date())
-        .setLastUpdatedTime(new Date())
-    );
-
-    await this.notifyListenersAfterStep(stepExecution);
-    this.logger.log(`Step ${this.name} completed successfully`);
-    return stepExecution;
   }
 
-  protected abstract processItems(): Promise<void>;
+  protected abstract processItems(stepExecution: StepExecution): Promise<void>;
 
   setReader(reader: ItemReader<I>) {
     this.reader = reader;
     return this;
   }
 
-  setProcessor(processor: ItemProcessor<I, O>) {
+  setProcessor(processor: ItemProcessor<I, O> | undefined) {
     this.processor = processor;
     return this;
   }
@@ -167,6 +166,11 @@ export abstract class Step<I, O> {
     return this;
   }
 
+  setParallelProcessing(parallelProcessing: boolean) {
+    this.parallelProcessing = parallelProcessing;
+    return this;
+  }
+
   protected async notifyListenersBeforeStep(
     stepExecution: StepExecution
   ): Promise<void> {
@@ -177,6 +181,7 @@ export abstract class Step<I, O> {
         this.logger.error(
           `Error occurred while notifying listener before step: ${error}`
         );
+        throw error;
       }
     }
   }
@@ -191,6 +196,7 @@ export abstract class Step<I, O> {
         this.logger.error(
           `Error occurred while notifying listener after step: ${error}`
         );
+        throw error;
       }
     }
   }
@@ -206,6 +212,7 @@ export abstract class Step<I, O> {
         this.logger.error(
           `Error occurred while notifying listener on step error: ${error}`
         );
+        throw error;
       }
     }
   }

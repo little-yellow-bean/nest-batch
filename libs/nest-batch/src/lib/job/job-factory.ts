@@ -1,14 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { BATCH_CONFIG } from '../constants';
-import { InMemoryJobRepository, JobRepository } from '../repository';
-import { ModuleOptions } from '../config';
-import { SimpleJob } from './simple-job';
-import { ItemReader, PaginableReader } from '../reader';
-import { ItemProcessor } from '../processor';
-import { ItemWriter } from '../writer';
+import { Injectable } from '@nestjs/common';
+
+import type { ModuleOptions } from '../config';
+
+import { BatchConfig } from '../config';
 import { JobListener, StepListener } from '../listener';
+import { ItemProcessor } from '../processor';
+import { ItemReader, PaginatedReader } from '../reader';
+import { InMemoryJobRepository, JobRepository } from '../repository';
 import { ChunkOrientedStep, PageOrientedStep } from '../step';
+import { ItemWriter } from '../writer';
 import { Job } from './job';
+import { SimpleJob } from './simple-job';
 
 type CreateStepPayload<I, O> = {
   reader: ItemReader<I>;
@@ -20,14 +22,14 @@ type CreateStepPayload<I, O> = {
 
 @Injectable()
 export class JobFactory {
-  private readonly defaultJobRepositiory = new InMemoryJobRepository();
-  constructor(@Inject(BATCH_CONFIG) private readonly config: ModuleOptions) {}
+  private readonly defaultJobRepository = new InMemoryJobRepository();
+  constructor(private readonly config: BatchConfig) {}
 
   jobBuilder(name: string) {
     const builder = new SimpleJobBuilder(
       name,
-      this.defaultJobRepositiory,
-      this.config,
+      this.defaultJobRepository,
+      this.config
     );
     return builder;
   }
@@ -38,9 +40,9 @@ class SimpleJobBuilder {
   constructor(
     name: string,
     private jobRepository: JobRepository,
-    private readonly config: ModuleOptions,
+    private readonly config: BatchConfig
   ) {
-    this.job = new SimpleJob().setName(name).setJobRepository(jobRepository);
+    this.job = new SimpleJob(name).setJobRepository(jobRepository);
   }
 
   repository(repository: JobRepository) {
@@ -75,18 +77,21 @@ class SimpleJobBuilder {
     maxRetries,
     retryDelay,
     shouldRetry,
+    parallelProcessing,
     name,
   }: CreateStepPayload<I, O>) {
     const step = (
-      reader instanceof PaginableReader
-        ? new PageOrientedStep()
-        : new ChunkOrientedStep()
+      reader instanceof PaginatedReader
+        ? new PageOrientedStep(name)
+        : new ChunkOrientedStep(name)
     )
-      .setName(name)
-      .setChunkSize(chunkSize || this.config.chunkSize)
-      .setMaxretries(maxRetries || this.config.maxRetries)
-      .setRetryDelay(retryDelay || this.config.retryDelay)
-      .setShouldRetry(shouldRetry || this.config.shouldRetry)
+      .setChunkSize(chunkSize || this.config.options.chunkSize)
+      .setMaxretries(maxRetries || this.config.options.maxRetries)
+      .setRetryDelay(retryDelay || this.config.options.retryDelay)
+      .setShouldRetry(shouldRetry || this.config.options.shouldRetry)
+      .setParallelProcessing(
+        parallelProcessing ?? this.config.options.parallelProcessing
+      )
       .setJobRepository(this.jobRepository)
       .setReader(reader)
       .setProcessor(processor)

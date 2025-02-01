@@ -1,3 +1,5 @@
+import { StepExecution } from '../execution';
+
 export interface ItemReader<T> {
-  read(): Promise<T[] | null>;
+  read(stepExecution: StepExecution): Promise<T[] | null>;
 }

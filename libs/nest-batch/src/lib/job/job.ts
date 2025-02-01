@@ -1,57 +1,44 @@
-import { Logger } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
-import { JobListener } from '../listener';
-import { Step } from '../step';
-import { JobRepository } from '../repository';
-import { ExecutionStatus, JobExecution } from '../execution';
-import { LIB_NAME } from '../constants';
+import { Logger } from "@nestjs/common";
+
+import { LIB_NAME } from "../constants";
+import { ExecutionStatus, JobExecution } from "../execution";
+import { JobListener } from "../listener";
+import { JobRepository } from "../repository";
+import { Step } from "../step";
 
 export abstract class Job {
   protected name: string;
-  protected steps: Step<any, any>[] = [];
+  protected steps: Step<unknown, unknown>[] = [];
   protected listeners: JobListener[] = [];
   protected jobRepository: JobRepository;
   protected readonly logger = new Logger(LIB_NAME);
 
-  async execute(parameters: Record<string, any>): Promise<JobExecution> {
-    if (!this.name?.trim().length) {
-      throw new Error('Job name is required');
+  constructor(name: string) {
+    if (!name.trim().length) {
+      throw new Error("Job name is required and cannot be empty");
     }
-    if (!this.jobRepository) {
-      throw new Error('Job repository is required');
-    }
+    this.name = name;
+  }
 
-    let jobExecution = new JobExecution()
-      .setId(uuid())
-      .setCreateTime(new Date())
-      .setJobParameters(parameters)
-      .setName(this.name)
-      .transitionStatus(ExecutionStatus.CREATED)
-      .setLastUpdatedTime(new Date());
+  async execute(parameters: Record<string, unknown>): Promise<JobExecution> {
+    this.logger.log(`Starting job: ${this.name}, with parameters: ${JSON.stringify(parameters)}`);
+    let jobExecution = new JobExecution({ jobParameters: parameters, name: this.name });
 
     try {
       jobExecution = await this.jobRepository.saveJobExecution(jobExecution);
       await this.notifyListenersBeforeJob(jobExecution);
       jobExecution = await this.jobRepository.updateJobExecution(
-        jobExecution
-          .transitionStatus(ExecutionStatus.STARTING)
-          .setStartTime(new Date())
-          .setLastUpdatedTime(new Date())
+        jobExecution.transitionStatus(ExecutionStatus.STARTING).setStartTime(new Date()).setLastUpdatedTime(new Date()),
       );
       // TODO: Add pre-started works in the future
       jobExecution = await this.jobRepository.updateJobExecution(
-        jobExecution
-          .transitionStatus(ExecutionStatus.STARTED)
-          .setLastUpdatedTime(new Date())
+        jobExecution.transitionStatus(ExecutionStatus.STARTED).setLastUpdatedTime(new Date()),
       );
 
       this.processSteps(jobExecution.getId())
         .then(async (status) => {
           jobExecution = await this.jobRepository.updateJobExecution(
-            jobExecution
-              .transitionStatus(status)
-              .setEndTime(new Date())
-              .setLastUpdatedTime(new Date())
+            jobExecution.transitionStatus(status).setEndTime(new Date()).setLastUpdatedTime(new Date()),
           );
           if (status === ExecutionStatus.STOPPED) {
             this.logger.log(`Job ${this.name} is stopped`);
@@ -67,21 +54,21 @@ export abstract class Job {
               .transitionStatus(ExecutionStatus.FAILED)
               .setEndTime(new Date())
               .setLastUpdatedTime(new Date())
-              .setFailureExceptions([error.message])
+              .setFailureExceptions([error.message]),
           );
           await this.notifyListenersOnError(jobExecution, error);
-          this.logger.error(`Job ${this.name} failed: ${error}`);
+          this.logger.error(`Job ${this.name} failed: ${error}`, error.stack);
         });
       return jobExecution;
-    } catch (error: any) {
+    } catch (error) {
       await this.jobRepository.updateJobExecution(
         jobExecution
           .transitionStatus(ExecutionStatus.FAILED)
           .setEndTime(new Date())
           .setLastUpdatedTime(new Date())
-          .setFailureExceptions([error.message])
+          .setFailureExceptions([(error as Error).message]),
       );
-      await this.notifyListenersOnError(jobExecution, error);
+      await this.notifyListenersOnError(jobExecution, error as Error);
       this.logger.error(`Job ${this.name} failed: ${error}`);
       throw error;
     }
@@ -93,7 +80,7 @@ export abstract class Job {
     return this.steps;
   }
 
-  addStep(step: Step<any, any>) {
+  addStep(step: Step<unknown, unknown>) {
     this.steps.push(step);
     return this;
   }
@@ -113,45 +100,35 @@ export abstract class Job {
     return this;
   }
 
-  protected async notifyListenersBeforeJob(
-    jobExecution: JobExecution
-  ): Promise<void> {
+  protected async notifyListenersBeforeJob(jobExecution: JobExecution): Promise<void> {
     for (const listener of this.listeners) {
       try {
         await listener.beforeJob?.(jobExecution);
       } catch (error) {
-        this.logger.error(
-          `Error occurred while notifying listener before job: ${error}`
-        );
+        this.logger.error(`Error occurred while notifying listener before job: ${error}`);
+        throw error;
       }
     }
   }
 
-  protected async notifyListenersAfterJob(
-    jobExecution: JobExecution
-  ): Promise<void> {
+  protected async notifyListenersAfterJob(jobExecution: JobExecution): Promise<void> {
     for (const listener of this.listeners) {
       try {
         await listener.afterJob?.(jobExecution);
       } catch (error) {
-        this.logger.error(
-          `Error occurred while notifying listener after job: ${error}`
-        );
+        this.logger.error(`Error occurred while notifying listener after job: ${error}`);
+        throw error;
       }
     }
   }
 
-  protected async notifyListenersOnError(
-    jobExecution: JobExecution,
-    error: Error
-  ): Promise<void> {
+  protected async notifyListenersOnError(jobExecution: JobExecution, error: Error): Promise<void> {
     for (const listener of this.listeners) {
       try {
         await listener.onJobError?.(jobExecution, error);
       } catch (error) {
-        this.logger.error(
-          `Error occurred while notifying listener on job error: ${error}`
-        );
+        this.logger.error(`Error occurred while notifying listener on job error: ${error}`);
+        throw error;
       }
     }
   }
